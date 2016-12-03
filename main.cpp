@@ -14,6 +14,7 @@
 static GLfloat fPitch = 0.0;
 static GLfloat fYaw   = 0.0;
 
+static float zoomFactor = 1;
 struct GLvector
 {
     GLfloat fX;
@@ -154,16 +155,15 @@ void vResize( GLsizei iWidth, GLsizei iHeight )
     if(iWidth <= iHeight)
     {
         fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
-        glOrtho(-fHalfWorldSize, fHalfWorldSize, -fHalfWorldSize*fAspect,
-                fHalfWorldSize*fAspect, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        glOrtho(-fHalfWorldSize*zoomFactor, fHalfWorldSize*zoomFactor, -fHalfWorldSize*fAspect*zoomFactor,
+                fHalfWorldSize*fAspect*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
     }
     else
     {
         fAspect = (GLfloat)iWidth / (GLfloat)iHeight;
-        glOrtho(-fHalfWorldSize*fAspect, fHalfWorldSize*fAspect, -fHalfWorldSize,
-                fHalfWorldSize, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        glOrtho(-fHalfWorldSize*fAspect*zoomFactor, fHalfWorldSize*fAspect*zoomFactor, -fHalfWorldSize*zoomFactor,
+                fHalfWorldSize*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
     }
-    
     glMatrixMode( GL_MODELVIEW );
 }
 
@@ -209,7 +209,10 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
             }
             
             bLight = !bLight;
-        };
+        } break;
+        case 'z' : {
+             zoomFactor +=  zoomFactor < 1.0 ? 0.1 : 1.0; 
+        }
     }
 }
 
@@ -218,22 +221,17 @@ void vSpecial(int iKey, int iX, int iY)
 {
     switch(iKey)
     {
-        case GLUT_KEY_PAGE_UP :
-        {
-            fPitch += 4.0;
+        case GLUT_KEY_PAGE_UP : {fPitch += 4.0; } break;
+        case GLUT_KEY_PAGE_DOWN : {fPitch -= 4.0; } break;
+        case GLUT_KEY_HOME : {fYaw += 4.0; } break;
+        case GLUT_KEY_END : {fYaw -= 4.0 ; } break;
+        case GLUT_KEY_UP : {
+            zoomFactor +=  zoomFactor < 1.0 ? 0.1 : 1.0; 
         } break;
-        case GLUT_KEY_PAGE_DOWN :
-        {
-            fPitch -= 4.0;
+        case GLUT_KEY_DOWN : {
+            if(zoomFactor > 0.1) zoomFactor -=  zoomFactor <= 1.0 ? 0.1 : 1.0;
         } break;
-        case GLUT_KEY_HOME :
-        {
-            fYaw += 4.0;
-        } break;
-        case GLUT_KEY_END :
-        {
-            fYaw -= 4.0 ;
-        } break;
+
     }
 }
 
@@ -250,6 +248,7 @@ void vDrawScene()
     
     glPushMatrix();
     vSetTime(fTime);
+    std::cout << zoomFactor << std::endl;
     
     glTranslatef(0.0, 0.0, -1.0);
     glRotatef( -fPitch, 1.0, 0.0, 0.0);
