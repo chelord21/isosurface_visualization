@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include "stdio.h"
 #include "math.h"
@@ -47,12 +46,10 @@ static const GLfloat a2fEdgeDirection[12][3] =
     {0.0, 0.0, 1.0},{0.0, 0.0, 1.0},{ 0.0, 0.0, 1.0},{0.0,  0.0, 1.0}
 };
 
-
-
-static const GLfloat afAmbientGreen [] = {0.00, 0.25, 0.00, 1.00};
-static const GLfloat afAmbientBlue  [] = {0.00, 0.00, 0.25, 1.00};
-static const GLfloat afDiffuseGreen [] = {0.00, 0.75, 0.00, 1.00};
-static const GLfloat afDiffuseBlue  [] = {0.00, 0.00, 0.75, 1.00};
+static const GLfloat afAmbientGreen [] = {1.00, 0.25, 0.00, 1.00};
+static const GLfloat afAmbientBlue  [] = {1.00, 0.00, 0.25, 1.00};
+static const GLfloat afDiffuseGreen [] = {1.00, 0.75, 0.00, 1.00};
+static const GLfloat afDiffuseBlue  [] = {1.00, 0.00, 0.75, 1.00};
 static const GLfloat afSpecularWhite[] = {1.00, 1.00, 1.00, 1.00};
 
 GLenum    ePolygonMode = GL_FILL;
@@ -72,6 +69,13 @@ void vResize(GLsizei, GLsizei);
 void vKeyboard(unsigned char cKey, int iX, int iY);
 void vSpecial(int iKey, int iX, int iY);
 
+// Functions for menu rendering
+void main_menu(int value);
+void density_control(int value);
+void color_control(int value);
+void size_control(int value);
+void camera_control(int value);
+
 GLvoid vPrintHelp();
 GLvoid vSetTime(GLfloat fTime);
 GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ);
@@ -84,73 +88,162 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
+    int density_menu, color_menu, size_menu, camera_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
     GLfloat afPropertiesSpecular[] = {1.00, 1.00, 1.00, 1.00};
-    
+
     GLsizei iWidth = 640.0;
     GLsizei iHeight = 480.0;
-    
+
     glutInit(&argc, argv);
     glutInitWindowPosition( 0, 0);
     glutInitWindowSize(iWidth, iHeight);
     glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
-    glutCreateWindow( "Marching Cubes" );
+    glutCreateWindow( "Cubos marchantes" );
     glutDisplayFunc( vDrawScene );
     glutIdleFunc( vIdle );
     glutReshapeFunc( vResize );
     glutKeyboardFunc( vKeyboard );
     glutSpecialFunc( vSpecial );
-    
+
     glClearColor( 0.0, 0.0, 0.0, 1.0 );
     glClearDepth( 1.0 );
-    
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
     glPolygonMode(GL_FRONT_AND_BACK, ePolygonMode);
-    
+
     glLightfv( GL_LIGHT0, GL_AMBIENT,  afPropertiesAmbient);
     glLightfv( GL_LIGHT0, GL_DIFFUSE,  afPropertiesDiffuse);
     glLightfv( GL_LIGHT0, GL_SPECULAR, afPropertiesSpecular);
     glLightModelf(GL_LIGHT_MODEL_TWO_SIDE, 1.0);
-    
+
     glEnable( GL_LIGHT0 );
-    
+
     glMaterialfv(GL_BACK,  GL_AMBIENT,   afAmbientGreen);
     glMaterialfv(GL_BACK,  GL_DIFFUSE,   afDiffuseGreen);
     glMaterialfv(GL_FRONT, GL_AMBIENT,   afAmbientBlue);
     glMaterialfv(GL_FRONT, GL_DIFFUSE,   afDiffuseBlue);
     glMaterialfv(GL_FRONT, GL_SPECULAR,  afSpecularWhite);
     glMaterialf( GL_FRONT, GL_SHININESS, 25.0);
-    
+
     vResize(iWidth, iHeight);
-    
-    vPrintHelp();
+
+    density_menu = glutCreateMenu(density_control);
+    glutAddMenuEntry("More", 1);
+    glutAddMenuEntry("Less", 2);
+
+    color_menu = glutCreateMenu(color_control);
+    glutAddMenuEntry("Psychedelic", 1);
+    glutAddMenuEntry("Default", 2);
+
+    size_menu = glutCreateMenu(size_control);
+    glutAddMenuEntry("More", 1);
+    glutAddMenuEntry("Less", 2);
+
+    camera_menu = glutCreateMenu(camera_control);
+    glutAddMenuEntry("Zoom in", 1);
+    glutAddMenuEntry("Zoom out", 2);
+    glutAddMenuEntry("Rotate right", 3);
+    glutAddMenuEntry("Rotate left", 4);
+
+    glutCreateMenu(main_menu);
+    glutAddMenuEntry("Quit", -1);
+    glutAddSubMenu("Density"  , density_menu);
+    glutAddSubMenu("Color"    , color_menu);
+    glutAddSubMenu("Size"     , size_menu);
+    glutAddSubMenu("Camera"   , camera_menu);
+    glutAttachMenu(GLUT_RIGHT_BUTTON);
+
     glutMainLoop();
 }
 
-GLvoid vPrintHelp()
+void main_menu(int value)
 {
-    printf("Marching Cubes Example by Cory Bloyd (dejaspaminacan@my-deja.com)\n\n");
-       
-    printf("+/-  increase/decrease sample density\n");
-    printf("PageUp/PageDown  increase/decrease surface value\n");
-    printf("s  change sample function\n");
-    printf("w  wireframe on/off\n");
-    printf("l  toggle lighting / color-by-normal\n");
-    printf("Home  spin scene on/off\n");
-    printf("End  source point animation on/off\n");
+    if (value == -1)
+        exit(0);
 }
 
+void density_control(int value)
+{
+    switch (value) {
+        case 1:
+            ++iDataSetSize;
+            fStepSize = 1.0/iDataSetSize;
+            break;
+        case 2:
+            if(iDataSetSize > 1)
+            {
+                --iDataSetSize;
+                fStepSize = 1.0/iDataSetSize;
+            }
+            break;
+    }
+    glutPostRedisplay();
+}
+
+void color_control(int value)
+{
+    switch (value) {
+        case 1:
+            glDisable(GL_LIGHTING);
+            bLight = !bLight;
+            break;
+        case 2:
+            glEnable(GL_LIGHTING);//use lit material color
+            bLight = !bLight;
+            break;
+    }
+    glutPostRedisplay();
+}
+
+void size_control(int value)
+{
+    switch (value) {
+        case 1:
+            if(fTargetValue < 1000.0)
+            {
+                fTargetValue *= 1.2;
+            }
+            break;
+        case 2:
+            if(fTargetValue > 1.0)
+            {
+                fTargetValue /= 1.2;
+            }
+            break;
+    }
+    glutPostRedisplay();
+}
+
+void camera_control(int value)
+{
+    switch (value) {
+        case 1:
+
+            break;
+        case 2:
+
+            break;
+        case 3:
+
+            break;
+        case 4:
+
+            break;
+    }
+    glutPostRedisplay();
+}
 
 void vResize( GLsizei iWidth, GLsizei iHeight )
 {
     GLfloat fAspect, fHalfWorldSize = (1.4142135623730950488016887242097/2);
-    
+
     glViewport( 0, 0, iWidth, iHeight );
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
-    
+
     if(iWidth <= iHeight)
     {
         fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
@@ -163,7 +256,7 @@ void vResize( GLsizei iWidth, GLsizei iHeight )
         glOrtho(-fHalfWorldSize*fAspect, fHalfWorldSize*fAspect, -fHalfWorldSize,
                 fHalfWorldSize, -10*fHalfWorldSize, 10*fHalfWorldSize);
     }
-    
+
     glMatrixMode( GL_MODELVIEW );
 }
 
@@ -207,7 +300,7 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
             {
                 glEnable(GL_LIGHTING);//use lit material color
             }
-            
+
             bLight = !bLight;
         };
     }
@@ -246,33 +339,34 @@ void vDrawScene()
 {
 
     static GLfloat fTime = 0.0;
+
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-    
+
     glPushMatrix();
     vSetTime(fTime);
-    
+
     glTranslatef(0.0, 0.0, -1.0);
     glRotatef( -fPitch, 1.0, 0.0, 0.0);
     glRotatef(     0.0, 0.0, 1.0, 0.0);
     glRotatef(    fYaw, 0.0, 0.0, 1.0);
-    
+
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
     glColor3f(1.0, 1.0, 1.0);
     glutWireCube(1.0);
     glPopAttrib();
-    
-    
+
+
     glPushMatrix();
     glTranslatef(-0.5, -0.5, -0.5);
     glBegin(GL_TRIANGLES);
     vMarchingCubes();
     glEnd();
     glPopMatrix();
-    
-    
+
+
     glPopMatrix();
-    
+
     glutSwapBuffers();
 }
 
@@ -281,7 +375,7 @@ void vDrawScene()
 GLfloat fGetOffset(GLfloat fValue1, GLfloat fValue2, GLfloat fValueDesired)
 {
     GLdouble fDelta = fValue2 - fValue1;
-    
+
     if(fDelta == 0.0)
     {
         return 0.5;
@@ -305,11 +399,11 @@ GLvoid vNormalizeVector(GLvector &rfVectorResult, GLvector &rfVectorSource)
 {
     GLfloat fOldLength;
     GLfloat fScale;
-    
+
     fOldLength = sqrtf( (rfVectorSource.fX * rfVectorSource.fX) +
                        (rfVectorSource.fY * rfVectorSource.fY) +
                        (rfVectorSource.fZ * rfVectorSource.fZ) );
-    
+
     if(fOldLength == 0.0)
     {
         rfVectorResult.fX = rfVectorSource.fX;
@@ -332,14 +426,14 @@ GLvoid vSetTime(GLfloat fNewTime)
 {
     GLfloat fOffset;
     GLint iSourceNum;
-    
+
     for(iSourceNum = 0; iSourceNum < 3; iSourceNum++)
     {
         sSourcePoint[iSourceNum].fX = 0.5;
         sSourcePoint[iSourceNum].fY = 0.5;
         sSourcePoint[iSourceNum].fZ = 0.5;
     }
-    
+
     fTime = fNewTime;
     fOffset = 1.0 + sinf(fTime);
     sSourcePoint[0].fX *= fOffset;
@@ -356,7 +450,7 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
 //    fDy = fY - sSourcePoint[0].fY;
 //    fDz = fZ - sSourcePoint[0].fZ;
 //    fResult += 0.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-    
+
 //    fDx = fX - sSourcePoint[1].fX;
 //    fDy = fY - sSourcePoint[1].fY;
 //    fDz = fZ - sSourcePoint[1].fZ;
@@ -366,9 +460,10 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
     fDy = fY - sSourcePoint[2].fY;
     fDz = fZ - sSourcePoint[2].fZ;
     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-    
+
     return fResult;
 }
+
 
 //vGetNormal() finds the gradient of the scalar field at a point
 //This gradient can be used as a very accurate vertx normal for lighting calculations
@@ -386,14 +481,14 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
 {
     extern GLint aiCubeEdgeFlags[256];
     extern GLint a2iTriangleConnectionTable[256][16];
-    
+
     GLint iCorner, iVertex, iVertexTest, iEdge, iTriangle, iFlagIndex, iEdgeFlags;
     GLfloat fOffset;
     GLvector sColor;
     GLfloat afCubeValue[8];
     GLvector asEdgeVertex[12];
     GLvector asEdgeNorm[12];
-    
+
     //Make a local copy of the values at the cube's corners
     for(iVertex = 0; iVertex < 8; iVertex++)
     {
@@ -401,7 +496,7 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
                                        fY + a2fVertexOffset[iVertex][1]*fScale,
                                        fZ + a2fVertexOffset[iVertex][2]*fScale);
     }
-    
+
     //Find which vertices are inside of the surface and which are outside
     iFlagIndex = 0;
     for(iVertexTest = 0; iVertexTest < 8; iVertexTest++)
@@ -409,16 +504,16 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
         if(afCubeValue[iVertexTest] <= fTargetValue)
             iFlagIndex |= 1<<iVertexTest;
     }
-    
+
     //Find which edges are intersected by the surface
     iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
-    
+
     //If the cube is entirely inside or outside of the surface, then there will be no intersections
     if(iEdgeFlags == 0)
     {
         return;
     }
-    
+
     //Find the point of intersection of the surface with each edge
     //Then find the normal to the surface at those points
     for(iEdge = 0; iEdge < 12; iEdge++)
@@ -428,26 +523,26 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
         {
             fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
                                  afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
-            
+
             asEdgeVertex[iEdge].fX = fX + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]) * fScale;
             asEdgeVertex[iEdge].fY = fY + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]) * fScale;
             asEdgeVertex[iEdge].fZ = fZ + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]) * fScale;
-            
+
             vGetNormal(asEdgeNorm[iEdge], asEdgeVertex[iEdge].fX, asEdgeVertex[iEdge].fY, asEdgeVertex[iEdge].fZ);
         }
     }
-    
-    
+
+
     //Draw the triangles that were found.  There can be up to five per cube
     for(iTriangle = 0; iTriangle < 5; iTriangle++)
     {
         if(a2iTriangleConnectionTable[iFlagIndex][3*iTriangle] < 0)
             break;
-        
+
         for(iCorner = 0; iCorner < 3; iCorner++)
         {
             iVertex = a2iTriangleConnectionTable[iFlagIndex][3*iTriangle+iCorner];
-            
+
             vGetColor(sColor, asEdgeVertex[iVertex], asEdgeNorm[iVertex]);
             glColor3f(sColor.fX, sColor.fY, sColor.fZ);
             glNormal3f(asEdgeNorm[iVertex].fX,   asEdgeNorm[iVertex].fY,   asEdgeNorm[iVertex].fZ);
@@ -455,8 +550,6 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
         }
     }
 }
-
-
 
 //vMarchingCubes iterates over the entire dataset, calling vMarchCube on each cube
 GLvoid vMarchingCubes()
@@ -473,6 +566,7 @@ GLvoid vMarchingCubes()
 
 // For any edge, if one vertex is inside of the surface and the other is outside of the surface
 //  then the edge intersects the surface
+
 // For each of the 8 vertices of the cube can be two possible states : either inside or outside of the surface
 // For any cube the are 2^8=256 possible sets of vertex states
 // This table lists the edges intersected by the surface for all 256 possible vertex states
