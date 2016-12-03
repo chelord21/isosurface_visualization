@@ -14,6 +14,9 @@
 static GLfloat fPitch = 0.0;
 static GLfloat fYaw   = 0.0;
 
+GLsizei iWidth = 640.0;
+GLsizei iHeight = 480.0;
+
 static float zoomFactor = 1;
 struct GLvector
 {
@@ -88,9 +91,6 @@ int main(int argc, char **argv)
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
     GLfloat afPropertiesSpecular[] = {1.00, 1.00, 1.00, 1.00};
-    
-    GLsizei iWidth = 640.0;
-    GLsizei iHeight = 480.0;
     
     glutInit(&argc, argv);
     glutInitWindowPosition( 0, 0);
@@ -237,6 +237,25 @@ void vSpecial(int iKey, int iX, int iY)
 
 void vIdle()
 {
+    GLfloat fAspect, fHalfWorldSize = (1.4142135623730950488016887242097/2);
+    
+    glViewport( 0, 0, iWidth, iHeight );
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity ();
+    
+    if(iWidth <= iHeight)
+    {
+        fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
+        glOrtho(-fHalfWorldSize*zoomFactor, fHalfWorldSize*zoomFactor, -fHalfWorldSize*fAspect*zoomFactor,
+                fHalfWorldSize*fAspect*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+    }
+    else
+    {
+        fAspect = (GLfloat)iWidth / (GLfloat)iHeight;
+        glOrtho(-fHalfWorldSize*fAspect*zoomFactor, fHalfWorldSize*fAspect*zoomFactor, -fHalfWorldSize*zoomFactor,
+                fHalfWorldSize*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+    }
+    glMatrixMode( GL_MODELVIEW );
     glutPostRedisplay();
 }
 
