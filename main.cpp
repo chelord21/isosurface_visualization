@@ -264,6 +264,18 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
 {
     switch(cKey)
     {
+        case 's':
+            if(fTargetValue < 1000.0)
+            {
+                fTargetValue *= 1.2;
+            }
+        break;
+        case 'b':
+            if(fTargetValue > 1.0)
+            {
+                fTargetValue /= 1.2;
+            }
+        break;
         case 'w' :
         {
             if(ePolygonMode == GL_LINE)
