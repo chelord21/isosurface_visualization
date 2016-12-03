@@ -424,7 +424,7 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
     for(iEdge = 0; iEdge < 12; iEdge++)
     {
         //if there is an intersection on this edge
-        if(iEdgeFlags & (1<<iEdge))
+        if(iEdgeFlags & (1<<iEdge)) //iEdge * 2, (iEdgeFlags == (iEdge*2))
         {
             fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
                                  afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
