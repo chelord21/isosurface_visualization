@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include "stdio.h"
 #include "math.h"
@@ -91,7 +90,7 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
-    int density_menu, color_menu, size_menu, camera_menu;
+    int density_menu, color_menu, size_menu, camera_menu, position_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
     GLfloat afPropertiesSpecular[] = {1.00, 1.00, 1.00, 1.00};
@@ -153,10 +152,10 @@ int main(int argc, char **argv)
 
     glutCreateMenu(main_menu);
     glutAddMenuEntry("Quit", -1);
-    glutAddSubMenu("Density", density_menu);
-    glutAddSubMenu("Color"  , color_menu);
-    glutAddSubMenu("Size"   , size_menu);
-    glutAddSubMenu("Camera" , camera_menu);
+    glutAddSubMenu("Density"  , density_menu);
+    glutAddSubMenu("Color"    , color_menu);
+    glutAddSubMenu("Size"     , size_menu);
+    glutAddSubMenu("Camera"   , camera_menu);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
     glutMainLoop();
@@ -172,10 +171,15 @@ void density_control(int value)
 {
     switch (value) {
         case 1:
-
+            ++iDataSetSize;
+            fStepSize = 1.0/iDataSetSize;
             break;
         case 2:
-
+            if(iDataSetSize > 1)
+            {
+                --iDataSetSize;
+                fStepSize = 1.0/iDataSetSize;
+            }
             break;
     }
     glutPostRedisplay();
@@ -185,10 +189,12 @@ void color_control(int value)
 {
     switch (value) {
         case 1:
-
+            glDisable(GL_LIGHTING);
+            bLight = !bLight;
             break;
         case 2:
-
+            glEnable(GL_LIGHTING);//use lit material color
+            bLight = !bLight;
             break;
     }
     glutPostRedisplay();
@@ -198,10 +204,16 @@ void size_control(int value)
 {
     switch (value) {
         case 1:
-
+            if(fTargetValue < 1000.0)
+            {
+                fTargetValue *= 1.2;
+            }
             break;
         case 2:
-
+            if(fTargetValue > 1.0)
+            {
+                fTargetValue /= 1.2;
+            }
             break;
     }
     glutPostRedisplay();
@@ -225,7 +237,6 @@ void camera_control(int value)
     }
     glutPostRedisplay();
 }
-
 
 void vResize( GLsizei iWidth, GLsizei iHeight )
 {
