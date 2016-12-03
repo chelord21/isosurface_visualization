@@ -12,6 +12,7 @@
 #include <vector>
 #include <cmath>
 
+
 struct GLvector
 {
     GLfloat fX;
