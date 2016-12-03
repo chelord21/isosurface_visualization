@@ -46,12 +46,10 @@ static const GLfloat a2fEdgeDirection[12][3] =
     {0.0, 0.0, 1.0},{0.0, 0.0, 1.0},{ 0.0, 0.0, 1.0},{0.0,  0.0, 1.0}
 };
 
-
-
-static const GLfloat afAmbientGreen [] = {0.00, 0.25, 0.00, 1.00};
-static const GLfloat afAmbientBlue  [] = {0.00, 0.00, 0.25, 1.00};
-static const GLfloat afDiffuseGreen [] = {0.00, 0.75, 0.00, 1.00};
-static const GLfloat afDiffuseBlue  [] = {0.00, 0.00, 0.75, 1.00};
+static const GLfloat afAmbientGreen [] = {1.00, 0.25, 0.00, 1.00};
+static const GLfloat afAmbientBlue  [] = {1.00, 0.00, 0.25, 1.00};
+static const GLfloat afDiffuseGreen [] = {1.00, 0.75, 0.00, 1.00};
+static const GLfloat afDiffuseBlue  [] = {1.00, 0.00, 0.75, 1.00};
 static const GLfloat afSpecularWhite[] = {1.00, 1.00, 1.00, 1.00};
 
 GLenum    ePolygonMode = GL_FILL;
@@ -90,7 +88,7 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
-    int density_menu, color_menu, size_menu, camera_menu, position_menu;
+    int density_menu, color_menu, size_menu, camera_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
     GLfloat afPropertiesSpecular[] = {1.00, 1.00, 1.00, 1.00};
@@ -102,7 +100,7 @@ int main(int argc, char **argv)
     glutInitWindowPosition( 0, 0);
     glutInitWindowSize(iWidth, iHeight);
     glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
-    glutCreateWindow( "Marching Cubes" );
+    glutCreateWindow( "Cubos marchantes" );
     glutDisplayFunc( vDrawScene );
     glutIdleFunc( vIdle );
     glutReshapeFunc( vResize );
@@ -452,7 +450,7 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
 //    fDy = fY - sSourcePoint[0].fY;
 //    fDz = fZ - sSourcePoint[0].fZ;
 //    fResult += 0.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-    
+
 //    fDx = fX - sSourcePoint[1].fX;
 //    fDy = fY - sSourcePoint[1].fY;
 //    fDz = fZ - sSourcePoint[1].fZ;
