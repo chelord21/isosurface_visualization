@@ -140,8 +140,8 @@ int main(int argc, char **argv)
     glutAddMenuEntry("Default", 2);
 
     size_menu = glutCreateMenu(size_control);
-    glutAddMenuEntry("More", 1);
-    glutAddMenuEntry("Less", 2);
+    glutAddMenuEntry("Smaller", 1);
+    glutAddMenuEntry("Bigger", 2);
 
     camera_menu = glutCreateMenu(camera_control);
     glutAddMenuEntry("Zoom in", 1);
@@ -222,10 +222,10 @@ void camera_control(int value)
 {
     switch (value) {
         case 1:
-
+            zoomFactor +=  0.1;
             break;
         case 2:
-
+            if(zoomFactor > 0.1) zoomFactor -=  0.1;
             break;
         case 3:
 
@@ -302,9 +302,6 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
             }
 
             bLight = !bLight;
-        } break;
-        case 'z' : {
-             zoomFactor +=  zoomFactor < 1.0 ? 0.1 : 1.0; 
         }
     }
 }
@@ -319,10 +316,10 @@ void vSpecial(int iKey, int iX, int iY)
         case GLUT_KEY_HOME : {fYaw += 4.0; } break;
         case GLUT_KEY_END : {fYaw -= 4.0 ; } break;
         case GLUT_KEY_UP : {
-            zoomFactor +=  zoomFactor < 1.0 ? 0.1 : 1.0; 
+            zoomFactor +=  0.1;
         } break;
         case GLUT_KEY_DOWN : {
-            if(zoomFactor > 0.1) zoomFactor -=  zoomFactor <= 1.0 ? 0.1 : 1.0;
+            if(zoomFactor > 0.1) zoomFactor -=  0.1;
         } break;
 
     }
