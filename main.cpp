@@ -11,6 +11,9 @@
 #include <vector>
 #include <cmath>
 
+static GLfloat fPitch = 0.0;
+static GLfloat fYaw   = 0.0;
+
 struct GLvector
 {
     GLfloat fX;
@@ -155,7 +158,7 @@ int main(int argc, char **argv)
 GLvoid vPrintHelp()
 {
     printf("Marching Cubes Example by Cory Bloyd (dejaspaminacan@my-deja.com)\n\n");
-    
+       
     printf("+/-  increase/decrease sample density\n");
     printf("PageUp/PageDown  increase/decrease surface value\n");
     printf("s  change sample function\n");
@@ -270,25 +273,19 @@ void vSpecial(int iKey, int iX, int iY)
     {
         case GLUT_KEY_PAGE_UP :
         {
-            if(fTargetValue < 1000.0)
-            {
-                fTargetValue *= 1.1;
-            }
+            fPitch += 4.0;
         } break;
         case GLUT_KEY_PAGE_DOWN :
         {
-            if(fTargetValue > 1.0)
-            {
-                fTargetValue /= 1.1;
-            }
+            fPitch -= 4.0;
         } break;
         case GLUT_KEY_HOME :
         {
-            bSpin = !bSpin;
+            fYaw += 4.0;
         } break;
         case GLUT_KEY_END :
         {
-            bMove = !bMove;
+            fYaw -= 4.0 ;
         } break;
     }
 }
@@ -300,24 +297,11 @@ void vIdle()
 
 void vDrawScene()
 {
-    static GLfloat fPitch = 0.0;
-    static GLfloat fYaw   = 0.0;
+
     static GLfloat fTime = 0.0;
-    
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     
     glPushMatrix();
-    
-    if(bSpin)
-    {
-        fPitch += 4.0;
-        fYaw   += 2.5;
-    }
-    if(bMove)
-    {
-        fTime  += 0.025;
-    }
-    
     vSetTime(fTime);
     
     glTranslatef(0.0, 0.0, -1.0);
