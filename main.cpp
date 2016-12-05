@@ -16,6 +16,8 @@ static GLfloat fYaw   = 0.0;
 GLsizei iWidth = 640.0;
 GLsizei iHeight = 480.0;
 
+FILE *obj
+
 static float zoomFactor = 1;
 struct GLvector
 {
@@ -23,6 +25,8 @@ struct GLvector
     GLfloat fY;
     GLfloat fZ;
 };
+
+int printFormat = 1;
 
 //These tables are used so that everything can be done in little loops that you can look at all at once
 // rather than in pages and pages of unrolled code.
@@ -94,6 +98,7 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
+	obj = fopen("myfile", "w");
     int density_menu, color_menu, size_menu, camera_menu, shape_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
@@ -168,6 +173,7 @@ int main(int argc, char **argv)
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
     glutMainLoop();
+    fclose(obj);
 }
 
 void main_menu(int value)
@@ -497,7 +503,10 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
      fDy = fY - sSourcePoint[2].fY;
      fDz = fZ - sSourcePoint[2].fZ;
      fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-
+     if(printFormat == 3)
+     	printFormat = 1;
+     fprintf(obj, fResult);
+     printFormat++;
      return fResult;
 }
 
