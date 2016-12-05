@@ -10,7 +10,7 @@
 #include <vector>
 #include <cmath>
 
-FILE *obj = fopen("object_file.txt", "w");
+FILE *obj = fopen("./object_file.txt", "w");
 GLenum    polyMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
