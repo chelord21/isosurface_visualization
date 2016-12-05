@@ -16,7 +16,7 @@ static GLfloat fYaw   = 0.0;
 GLsizei iWidth = 640.0;
 GLsizei iHeight = 480.0;
 
-FILE *obj
+FILE *obj = fopen("object_file.txt", "w");
 
 static float zoomFactor = 1;
 struct GLvector
@@ -98,7 +98,11 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
-	obj = fopen("myfile", "w");
+    if (obj == NULL)
+    {
+        printf("Error opening file!\n");
+        exit(1);
+    }
     int density_menu, color_menu, size_menu, camera_menu, shape_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
@@ -157,11 +161,11 @@ int main(int argc, char **argv)
     glutAddMenuEntry("Rotate left", 3);
     glutAddMenuEntry("Rotate up", 5);
     glutAddMenuEntry("Rotate down", 6);
-    
+
     shape_menu = glutCreateMenu(shape_control);
     glutAddMenuEntry("Sphere", 1);
     glutAddMenuEntry("Pipes", 2);
-    
+
 
     glutCreateMenu(main_menu);
     glutAddMenuEntry("Quit", -1);
@@ -173,7 +177,6 @@ int main(int argc, char **argv)
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
     glutMainLoop();
-    fclose(obj);
 }
 
 void main_menu(int value)
@@ -249,7 +252,7 @@ void camera_control(int value)
             fPitch += 4.0;  break;
         case 6:
             fPitch -= 4.0;  break;
-            
+
     }
     glutPostRedisplay();
 }
@@ -368,11 +371,11 @@ void vSpecial(int iKey, int iX, int iY)
 void vIdle()
 {
     GLfloat fAspect, fHalfWorldSize = (sqrt(2)/2);
-    
+
     glViewport( 0, 0, iWidth, iHeight );
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
-    
+
     if(iWidth <= iHeight)
     {
         fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
@@ -503,9 +506,11 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
      fDy = fY - sSourcePoint[2].fY;
      fDz = fZ - sSourcePoint[2].fZ;
      fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-     if(printFormat == 3)
-     	printFormat = 1;
-     fprintf(obj, fResult);
+     if(printFormat > 3){
+          printFormat = 1;
+          fprintf(obj, "\n");
+     }
+     fprintf(obj, "%f ", static_cast<float>(fResult));
      printFormat++;
      return fResult;
 }
@@ -518,11 +523,11 @@ GLfloat fSampleIntersection(GLfloat fX, GLfloat fY, GLfloat fZ)
     fDx = fX - sSourcePoint[0].fX;
     fDy = fY - sSourcePoint[0].fY;
     fResult += 0.5/(fDx*fDx + fDy*fDy);
-    
+
     fDy = fY - sSourcePoint[2].fY;
     fDz = fZ - sSourcePoint[2].fZ;
     fResult += 1.0/(fDy*fDy + fDz*fDz);
-    
+
     return fResult;
 }
 
@@ -623,6 +628,7 @@ GLvoid vMarchingCubes()
             {
                 vMarchCube(iX*fStepSize, iY*fStepSize, iZ*fStepSize, fStepSize);
             }
+    fclose(obj);
 }
 
 
