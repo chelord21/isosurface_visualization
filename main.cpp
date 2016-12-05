@@ -79,10 +79,12 @@ void density_control(int value);
 void color_control(int value);
 void size_control(int value);
 void camera_control(int value);
+void shape_control(int value);
 
 GLvoid vPrintHelp();
 GLvoid vSetTime(GLfloat fTime);
 GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ);
+GLfloat fSampleIntersection(GLfloat fX, GLfloat fY, GLfloat fZ);
 GLfloat (*fSample)(GLfloat fX, GLfloat fY, GLfloat fZ) = fSample1;
 
 GLvoid vMarchingCubes();
@@ -92,7 +94,7 @@ GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarc
 
 int main(int argc, char **argv)
 {
-    int density_menu, color_menu, size_menu, camera_menu;
+    int density_menu, color_menu, size_menu, camera_menu, shape_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
     GLfloat afPropertiesSpecular[] = {1.00, 1.00, 1.00, 1.00};
@@ -150,6 +152,11 @@ int main(int argc, char **argv)
     glutAddMenuEntry("Rotate left", 3);
     glutAddMenuEntry("Rotate up", 5);
     glutAddMenuEntry("Rotate down", 6);
+    
+    shape_menu = glutCreateMenu(shape_control);
+    glutAddMenuEntry("Sphere", 1);
+    glutAddMenuEntry("Pipes", 2);
+    
 
     glutCreateMenu(main_menu);
     glutAddMenuEntry("Quit", -1);
@@ -157,6 +164,7 @@ int main(int argc, char **argv)
     glutAddSubMenu("Color"    , color_menu);
     glutAddSubMenu("Size"     , size_menu);
     glutAddSubMenu("Camera"   , camera_menu);
+    glutAddSubMenu("Shape"   , shape_menu);
     glutAttachMenu(GLUT_RIGHT_BUTTON);
 
     glutMainLoop();
@@ -240,9 +248,20 @@ void camera_control(int value)
     glutPostRedisplay();
 }
 
+void shape_control(int value)
+{
+    switch (value) {
+        case 1:
+            fSample =  fSample1; break;
+        case 2:
+            fSample = fSampleIntersection; break;
+    }
+    glutPostRedisplay();
+}
+
 void vResize( GLsizei iWidth, GLsizei iHeight )
 {
-    GLfloat fAspect, fHalfWorldSize = (1.4142135623730950488016887242097/2);
+    GLfloat fAspect, fHalfWorldSize = (sqrt(2)/2);
 
     glViewport( 0, 0, iWidth, iHeight );
     glMatrixMode (GL_PROJECTION);
@@ -342,7 +361,7 @@ void vSpecial(int iKey, int iX, int iY)
 
 void vIdle()
 {
-    GLfloat fAspect, fHalfWorldSize = (1.4142135623730950488016887242097/2);
+    GLfloat fAspect, fHalfWorldSize = (sqrt(2)/2);
     
     glViewport( 0, 0, iWidth, iHeight );
     glMatrixMode (GL_PROJECTION);
@@ -473,21 +492,28 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
 {
     GLdouble fResult = 0.0;
     GLdouble fDx, fDy, fDz;
-//    fDx = fX - sSourcePoint[0].fX;
-//    fDy = fY - sSourcePoint[0].fY;
-//    fDz = fZ - sSourcePoint[0].fZ;
-//    fResult += 0.5/(fDx*fDx + fDy*fDy + fDz*fDz);
 
-//    fDx = fX - sSourcePoint[1].fX;
-//    fDy = fY - sSourcePoint[1].fY;
-//    fDz = fZ - sSourcePoint[1].fZ;
-//    fResult += 1.0/(fDx*fDx + fDy*fDy + fDz*fDz);
+     fDx = fX - sSourcePoint[2].fX;
+     fDy = fY - sSourcePoint[2].fY;
+     fDz = fZ - sSourcePoint[2].fZ;
+     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
 
-    fDx = fX - sSourcePoint[2].fX;
+     return fResult;
+}
+
+//fSample1 finds the distance of (fX, fY, fZ) from three moving points
+GLfloat fSampleIntersection(GLfloat fX, GLfloat fY, GLfloat fZ)
+{
+    GLdouble fResult = 0.0;
+    GLdouble fDx, fDy, fDz;
+    fDx = fX - sSourcePoint[0].fX;
+    fDy = fY - sSourcePoint[0].fY;
+    fResult += 0.5/(fDx*fDx + fDy*fDy);
+    
     fDy = fY - sSourcePoint[2].fY;
     fDz = fZ - sSourcePoint[2].fZ;
-    fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-
+    fResult += 1.0/(fDy*fDy + fDz*fDz);
+    
     return fResult;
 }
 
