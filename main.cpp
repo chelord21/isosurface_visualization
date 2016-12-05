@@ -14,7 +14,6 @@ GLenum    polyMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
 GLfloat   isoValue = 48.0;
-GLfloat   timeF = 0.0;
 GLboolean bSpin = true;
 GLboolean bMove = true;
 GLboolean bLight = true;
@@ -33,7 +32,7 @@ struct GLvector
     GLfloat yVec;
     GLfloat zVec;
 };
-GLvector  sSourcePoint[3];
+GLvector  sSourcePoint[2];
 
 void vIdle();
 void vDrawScene();
@@ -49,7 +48,7 @@ void camera_control(int value);
 void shape_control(int value);
 
 GLvoid vPrintHelp();
-GLvoid vSetTime(GLfloat timeF);
+GLvoid init();
 GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec);
 GLfloat fSampleIntersection(GLfloat xVec, GLfloat yVec, GLfloat zVec);
 GLfloat (*fSample)(GLfloat xVec, GLfloat yVec, GLfloat zVec) = fSampleSphere;
@@ -268,18 +267,6 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
                 isoValue /= 1.2;
             }
         break;
-        case 'w' :
-        {
-            if(polyMode == GL_LINE)
-            {
-                polyMode = GL_FILL;
-            }
-            else
-            {
-                polyMode = GL_LINE;
-            }
-            glPolygonMode(GL_FRONT_AND_BACK, polyMode);
-        } break;
         case '+' :
         case '=' :
         {
@@ -355,12 +342,11 @@ void vIdle()
 
 void vDrawScene()
 {
-    static GLfloat timeF = 0.0;
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     glPushMatrix();
-    vSetTime(timeF);
+    init();
     glTranslatef(0.0, 0.0, -1.0);
     glRotatef( -fPitch, 1.0, 0.0, 0.0);
     glRotatef(     0.0, 0.0, 1.0, 0.0);
@@ -430,32 +416,23 @@ GLvoid vNormalizeVector(GLvector &rfVectorResult, GLvector &rfVectorSource)
     }
 }
 
-GLvoid vSetTime(GLfloat fNewTime)
+GLvoid init()
 {
-    GLfloat fOffset;
-    GLint iSourceNum;
-
-    for(iSourceNum = 0; iSourceNum < 3; iSourceNum++)
-    {
-        sSourcePoint[iSourceNum].xVec = 0.5;
-        sSourcePoint[iSourceNum].yVec = 0.5;
-        sSourcePoint[iSourceNum].zVec = 0.5;
+    for(GLint i = 0; i < 2; i++) {
+        sSourcePoint[i].xVec = 0.5;
+        sSourcePoint[i].yVec = 0.5;
+        sSourcePoint[i].zVec = 0.5;
     }
 
-    timeF = fNewTime;
-    fOffset = 1.0 + sinf(timeF);
-    sSourcePoint[0].xVec *= fOffset;
-    sSourcePoint[1].yVec *= fOffset;
-    sSourcePoint[2].zVec *= fOffset;
 }
 
 GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec)
 {
     GLdouble fResult = 0.0;
     GLdouble fDx, fDy, fDz;
-    fDx = xVec - sSourcePoint[2].xVec;
-    fDy = yVec - sSourcePoint[2].yVec;
-    fDz = zVec - sSourcePoint[2].zVec;
+    fDx = xVec - sSourcePoint[1].xVec;
+    fDy = yVec - sSourcePoint[1].yVec;
+    fDz = zVec - sSourcePoint[1].zVec;
     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
 
     return fResult;
@@ -469,8 +446,8 @@ GLfloat fSampleIntersection(GLfloat xVec, GLfloat yVec, GLfloat zVec)
     fDy = yVec - sSourcePoint[0].yVec;
     fResult += 0.5/(fDx*fDx + fDy*fDy);
     
-    fDy = yVec - sSourcePoint[2].yVec;
-    fDz = zVec - sSourcePoint[2].zVec;
+    fDy = yVec - sSourcePoint[1].yVec;
+    fDz = zVec - sSourcePoint[1].zVec;
     fResult += 1.0/(fDy*fDy + fDz*fDz);
     
     return fResult;
@@ -497,7 +474,9 @@ GLvoid marchingCubes(GLfloat xVec, GLfloat yVec, GLfloat zVec, GLfloat scalingFa
     GLvector asEdgeNorm[12];
 
     for(currentVertex = 0; currentVertex < 8; currentVertex++){
-        afCubeValue[currentVertex] = fSample(xVec + verticesOffset[currentVertex][0]*scalingFactor, yVec + verticesOffset[currentVertex][1]*scalingFactor, zVec + verticesOffset[currentVertex][2]*scalingFactor);
+        afCubeValue[currentVertex] = fSample(xVec + verticesOffset[currentVertex][0]*scalingFactor, 
+                                             yVec + verticesOffset[currentVertex][1]*scalingFactor, 
+                                             zVec + verticesOffset[currentVertex][2]*scalingFactor);
     }
 
     cubeConfig = 0;
