@@ -108,7 +108,7 @@ int main(int argc, char **argv)
     glutKeyboardFunc( vKeyboard );
     glutSpecialFunc( vSpecial );
 
-    glClearColor( 0.0, 0.0, 0.0, 1.0 );
+    glClearColor( 0.32, 0.32, 0.32, 1.0 );
     glClearDepth( 1.0 );
 
     glEnable(GL_DEPTH_TEST);
@@ -146,8 +146,10 @@ int main(int argc, char **argv)
     camera_menu = glutCreateMenu(camera_control);
     glutAddMenuEntry("Zoom in", 1);
     glutAddMenuEntry("Zoom out", 2);
-    glutAddMenuEntry("Rotate right", 3);
-    glutAddMenuEntry("Rotate left", 4);
+    glutAddMenuEntry("Rotate right", 4);
+    glutAddMenuEntry("Rotate left", 3);
+    glutAddMenuEntry("Rotate up", 5);
+    glutAddMenuEntry("Rotate down", 6);
 
     glutCreateMenu(main_menu);
     glutAddMenuEntry("Quit", -1);
@@ -222,17 +224,18 @@ void camera_control(int value)
 {
     switch (value) {
         case 1:
-            zoomFactor +=  0.1;
-            break;
+            zoomFactor -=  0.1; break;
         case 2:
-            if(zoomFactor > 0.1) zoomFactor -=  0.1;
-            break;
+            if(zoomFactor > 0.1) zoomFactor +=  0.1; break;
         case 3:
-
-            break;
+            fYaw += 4.0;  break;
         case 4:
-
-            break;
+            fYaw -= 4.0;  break;
+        case 5:
+            fPitch += 4.0;  break;
+        case 6:
+            fPitch -= 4.0;  break;
+            
     }
     glutPostRedisplay();
 }
@@ -378,7 +381,6 @@ void vDrawScene()
     glPushAttrib(GL_LIGHTING_BIT);
     glDisable(GL_LIGHTING);
     glColor3f(1.0, 1.0, 1.0);
-    glutWireCube(1.0);
     glPopAttrib();
 
 
