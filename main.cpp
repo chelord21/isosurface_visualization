@@ -10,7 +10,8 @@
 #include <vector>
 #include <cmath>
 
-FILE *obj = fopen("object_file.txt", "w");
+FILE *obj = fopen("./object_file.txt", "w");
+int printFormat = 1;
 GLenum    polyMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
@@ -441,7 +442,12 @@ GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec)
     fDy = yVec - sSourcePoint[1].yVec;
     fDz = zVec - sSourcePoint[1].zVec;
     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-
+    if(printFormat > 3){
+    	printFormat = 1;
+    	fprintf(obj, "\n");
+    }
+ 	fprintf(obj, "%f ", static_cast<float>(fResult));
+	printFormat++;
     return fResult;
 }
 
