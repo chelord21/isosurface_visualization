@@ -10,7 +10,8 @@
 #include <vector>
 #include <cmath>
 
-FILE *obj = fopen("./object_file.txt", "w");
+FILE *obj = fopen("./object_file.obj", "w");
+int printFormat = 1;
 GLenum    polyMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
@@ -64,6 +65,7 @@ int main(int argc, char **argv)
         printf("Error opening file!\n");
         exit(1);
     }
+    
     int density_menu, color_menu, size_menu, camera_menu, shape_menu;
     GLfloat afPropertiesAmbient [] = {0.50, 0.50, 0.50, 1.00};
     GLfloat afPropertiesDiffuse [] = {0.75, 0.75, 0.75, 1.00};
@@ -441,7 +443,12 @@ GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec)
     fDy = yVec - sSourcePoint[1].yVec;
     fDz = zVec - sSourcePoint[1].zVec;
     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-
+//    if(printFormat > 3){
+//    	printFormat = 1;
+//    	fprintf(obj, "\n\tv ");
+//    }
+// 	fprintf(obj, "%f ", static_cast<float>(fResult));
+	printFormat++;
     return fResult;
 }
 
@@ -525,6 +532,9 @@ GLvoid marchingCubes(GLfloat xVec, GLfloat yVec, GLfloat zVec, GLfloat scalingFa
             glColor3f(sColor.xVec, sColor.yVec, sColor.zVec);
             glNormal3f(asEdgeNorm[currentVertex].xVec,   asEdgeNorm[currentVertex].yVec,   asEdgeNorm[currentVertex].zVec);
             glVertex3f(asEdgeVertex[currentVertex].xVec, asEdgeVertex[currentVertex].yVec, asEdgeVertex[currentVertex].zVec);
+        
+            fprintf(obj, "\tv %f %f %f\n", static_cast<float>(asEdgeVertex[currentVertex].xVec), static_cast<float>(asEdgeVertex[currentVertex].yVec), static_cast<float>(asEdgeVertex[currentVertex].zVec));
+
         }
     }
 }
@@ -538,6 +548,12 @@ GLvoid marchingCubesAux()
             {
                 vMarchCube(iX*fStepSize, iY*fStepSize, iZ*fStepSize, fStepSize);
             }
+    fprintf(obj, "\tf ");
+    for(int i = 1; i < 1100; i++){
+        fprintf(obj, "%d ", i);
+        
+    }
+    
     fclose(obj);
 }
 
