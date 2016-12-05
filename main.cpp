@@ -10,69 +10,36 @@
 #include <vector>
 #include <cmath>
 
-static GLfloat fPitch = 0.0;
-static GLfloat fYaw   = 0.0;
-
-GLsizei iWidth = 640.0;
-GLsizei iHeight = 480.0;
-
-static float zoomFactor = 1;
-struct GLvector
-{
-    GLfloat fX;
-    GLfloat fY;
-    GLfloat fZ;
-};
-
-//These tables are used so that everything can be done in little loops that you can look at all at once
-// rather than in pages and pages of unrolled code.
-
-//a2fVertexOffset lists the positions, relative to vertex0, of each of the 8 vertices of a cube
-static const GLfloat a2fVertexOffset[8][3] =
-{
-    {0.0, 0.0, 0.0},{1.0, 0.0, 0.0},{1.0, 1.0, 0.0},{0.0, 1.0, 0.0},
-    {0.0, 0.0, 1.0},{1.0, 0.0, 1.0},{1.0, 1.0, 1.0},{0.0, 1.0, 1.0}
-};
-
-//a2iEdgeConnection lists the index of the endpoint vertices for each of the 12 edges of the cube
-static const GLint a2iEdgeConnection[12][2] =
-{
-    {0,1}, {1,2}, {2,3}, {3,0},
-    {4,5}, {5,6}, {6,7}, {7,4},
-    {0,4}, {1,5}, {2,6}, {3,7}
-};
-
-//a2fEdgeDirection lists the direction vector (vertex1-vertex0) for each edge in the cube
-static const GLfloat a2fEdgeDirection[12][3] =
-{
-    {1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{-1.0, 0.0, 0.0},{0.0, -1.0, 0.0},
-    {1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{-1.0, 0.0, 0.0},{0.0, -1.0, 0.0},
-    {0.0, 0.0, 1.0},{0.0, 0.0, 1.0},{ 0.0, 0.0, 1.0},{0.0,  0.0, 1.0}
-};
-
-static const GLfloat afAmbientGreen [] = {1.00, 0.25, 0.00, 1.00};
-static const GLfloat afAmbientBlue  [] = {1.00, 0.00, 0.25, 1.00};
-static const GLfloat afDiffuseGreen [] = {1.00, 0.75, 0.00, 1.00};
-static const GLfloat afDiffuseBlue  [] = {1.00, 0.00, 0.75, 1.00};
-static const GLfloat afSpecularWhite[] = {1.00, 1.00, 1.00, 1.00};
-
-GLenum    ePolygonMode = GL_FILL;
+GLenum    polyMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
-GLfloat   fTargetValue = 48.0;
-GLfloat   fTime = 0.0;
-GLvector  sSourcePoint[3];
+GLfloat   isoValue = 48.0;
+GLfloat   timeF = 0.0;
 GLboolean bSpin = true;
 GLboolean bMove = true;
 GLboolean bLight = true;
+GLsizei screenWidth = 640.0;
+GLsizei screenHeight = 480.0;
+static float zoomFactor = 1;
+static GLfloat fPitch = 0.0;
+static GLfloat fYaw   = 0.0;
+static const GLfloat verticesOffset[8][3] = { {0.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 0.0, 1.0}, {1.0, 0.0, 1.0}, {1.0, 1.0, 1.0}, {0.0, 1.0, 1.0} };
+static const GLint edgeConnectionTable[12][2] = { {0,1}, {1,2}, {2,3}, {3,0}, {4,5}, {5,6}, {6,7}, {7,4}, {0,4}, {1,5}, {2,6}, {3,7}};
+static const GLfloat edgeDirectionTable[12][3] = { {1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{-1.0, 0.0, 0.0},{0.0, -1.0, 0.0}, {1.0, 0.0, 0.0},{0.0, 1.0, 0.0},{-1.0, 0.0, 0.0},{0.0, -1.0, 0.0}, {0.0, 0.0, 1.0},{0.0, 0.0, 1.0},{ 0.0, 0.0, 1.0},{0.0,  0.0, 1.0} };
 
+struct GLvector
+{
+    GLfloat xVec;
+    GLfloat yVec;
+    GLfloat zVec;
+};
+GLvector  sSourcePoint[3];
 
 void vIdle();
 void vDrawScene();
 void vResize(GLsizei, GLsizei);
 void vKeyboard(unsigned char cKey, int iX, int iY);
 void vSpecial(int iKey, int iX, int iY);
-
 // Functions for menu rendering
 void main_menu(int value);
 void density_control(int value);
@@ -82,15 +49,13 @@ void camera_control(int value);
 void shape_control(int value);
 
 GLvoid vPrintHelp();
-GLvoid vSetTime(GLfloat fTime);
-GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ);
-GLfloat fSampleIntersection(GLfloat fX, GLfloat fY, GLfloat fZ);
-GLfloat (*fSample)(GLfloat fX, GLfloat fY, GLfloat fZ) = fSample1;
-
-GLvoid vMarchingCubes();
-GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale);
-
-GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarchCube1;
+GLvoid vSetTime(GLfloat timeF);
+GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec);
+GLfloat fSampleIntersection(GLfloat xVec, GLfloat yVec, GLfloat zVec);
+GLfloat (*fSample)(GLfloat xVec, GLfloat yVec, GLfloat zVec) = fSampleSphere;
+GLvoid marchingCubesAux();
+GLvoid marchingCubes(GLfloat xVec, GLfloat yVec, GLfloat zVec, GLfloat scalingFactor);
+GLvoid (*vMarchCube)(GLfloat xVec, GLfloat yVec, GLfloat zVec, GLfloat scalingFactor) = marchingCubes;
 
 int main(int argc, char **argv)
 {
@@ -101,7 +66,7 @@ int main(int argc, char **argv)
 
     glutInit(&argc, argv);
     glutInitWindowPosition( 0, 0);
-    glutInitWindowSize(iWidth, iHeight);
+    glutInitWindowSize(screenWidth, screenHeight);
     glutInitDisplayMode( GLUT_RGB | GLUT_DEPTH | GLUT_DOUBLE );
     glutCreateWindow( "Cubos marchantes" );
     glutDisplayFunc( vDrawScene );
@@ -115,7 +80,7 @@ int main(int argc, char **argv)
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, ePolygonMode);
+    glPolygonMode(GL_FRONT_AND_BACK, polyMode);
 
     glLightfv( GL_LIGHT0, GL_AMBIENT,  afPropertiesAmbient);
     glLightfv( GL_LIGHT0, GL_DIFFUSE,  afPropertiesDiffuse);
@@ -124,6 +89,12 @@ int main(int argc, char **argv)
 
     glEnable( GL_LIGHT0 );
 
+    static const GLfloat afAmbientGreen [] = {1.00, 0.25, 0.00, 1.00};
+    static const GLfloat afAmbientBlue  [] = {1.00, 0.00, 0.25, 1.00};
+    static const GLfloat afDiffuseGreen [] = {1.00, 0.75, 0.00, 1.00};
+    static const GLfloat afDiffuseBlue  [] = {1.00, 0.00, 0.75, 1.00};
+    static const GLfloat afSpecularWhite[] = {1.00, 1.00, 1.00, 1.00};
+
     glMaterialfv(GL_BACK,  GL_AMBIENT,   afAmbientGreen);
     glMaterialfv(GL_BACK,  GL_DIFFUSE,   afDiffuseGreen);
     glMaterialfv(GL_FRONT, GL_AMBIENT,   afAmbientBlue);
@@ -131,7 +102,7 @@ int main(int argc, char **argv)
     glMaterialfv(GL_FRONT, GL_SPECULAR,  afSpecularWhite);
     glMaterialf( GL_FRONT, GL_SHININESS, 25.0);
 
-    vResize(iWidth, iHeight);
+    vResize(screenWidth, screenHeight);
 
     density_menu = glutCreateMenu(density_control);
     glutAddMenuEntry("More", 1);
@@ -156,7 +127,6 @@ int main(int argc, char **argv)
     shape_menu = glutCreateMenu(shape_control);
     glutAddMenuEntry("Sphere", 1);
     glutAddMenuEntry("Pipes", 2);
-    
 
     glutCreateMenu(main_menu);
     glutAddMenuEntry("Quit", -1);
@@ -202,7 +172,7 @@ void color_control(int value)
             bLight = !bLight;
             break;
         case 2:
-            glEnable(GL_LIGHTING);//use lit material color
+            glEnable(GL_LIGHTING);
             bLight = !bLight;
             break;
     }
@@ -213,15 +183,15 @@ void size_control(int value)
 {
     switch (value) {
         case 1:
-            if(fTargetValue < 1000.0)
+            if(isoValue < 1000.0)
             {
-                fTargetValue *= 1.2;
+                isoValue *= 1.2;
             }
             break;
         case 2:
-            if(fTargetValue > 1.0)
+            if(isoValue > 1.0)
             {
-                fTargetValue /= 1.2;
+                isoValue /= 1.2;
             }
             break;
     }
@@ -252,32 +222,32 @@ void shape_control(int value)
 {
     switch (value) {
         case 1:
-            fSample =  fSample1; break;
+            fSample =  fSampleSphere; break;
         case 2:
             fSample = fSampleIntersection; break;
     }
     glutPostRedisplay();
 }
 
-void vResize( GLsizei iWidth, GLsizei iHeight )
+void vResize( GLsizei screenWidth, GLsizei screenHeight )
 {
-    GLfloat fAspect, fHalfWorldSize = (sqrt(2)/2);
+    GLfloat aspectValue, midPointView = (sqrt(2)/2);
 
-    glViewport( 0, 0, iWidth, iHeight );
+    glViewport( 0, 0, screenWidth, screenHeight );
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
 
-    if(iWidth <= iHeight)
+    if(screenWidth <= screenHeight)
     {
-        fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
-        glOrtho(-fHalfWorldSize*zoomFactor, fHalfWorldSize*zoomFactor, -fHalfWorldSize*fAspect*zoomFactor,
-                fHalfWorldSize*fAspect*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        aspectValue = (GLfloat)screenHeight / (GLfloat)screenWidth;
+        glOrtho(-midPointView*zoomFactor, midPointView*zoomFactor, -midPointView*aspectValue*zoomFactor,
+                midPointView*aspectValue*zoomFactor, -10*midPointView, 10*midPointView);
     }
     else
     {
-        fAspect = (GLfloat)iWidth / (GLfloat)iHeight;
-        glOrtho(-fHalfWorldSize*fAspect*zoomFactor, fHalfWorldSize*fAspect*zoomFactor, -fHalfWorldSize*zoomFactor,
-                fHalfWorldSize*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        aspectValue = (GLfloat)screenWidth / (GLfloat)screenHeight;
+        glOrtho(-midPointView*aspectValue*zoomFactor, midPointView*aspectValue*zoomFactor, -midPointView*zoomFactor,
+                midPointView*zoomFactor, -10*midPointView, 10*midPointView);
     }
     glMatrixMode( GL_MODELVIEW );
 }
@@ -287,28 +257,28 @@ void vKeyboard(unsigned char cKey, int iX, int iY)
     switch(cKey)
     {
         case 's':
-            if(fTargetValue < 1000.0)
+            if(isoValue < 1000.0)
             {
-                fTargetValue *= 1.2;
+                isoValue *= 1.2;
             }
         break;
         case 'b':
-            if(fTargetValue > 1.0)
+            if(isoValue > 1.0)
             {
-                fTargetValue /= 1.2;
+                isoValue /= 1.2;
             }
         break;
         case 'w' :
         {
-            if(ePolygonMode == GL_LINE)
+            if(polyMode == GL_LINE)
             {
-                ePolygonMode = GL_FILL;
+                polyMode = GL_FILL;
             }
             else
             {
-                ePolygonMode = GL_LINE;
+                polyMode = GL_LINE;
             }
-            glPolygonMode(GL_FRONT_AND_BACK, ePolygonMode);
+            glPolygonMode(GL_FRONT_AND_BACK, polyMode);
         } break;
         case '+' :
         case '=' :
@@ -361,23 +331,23 @@ void vSpecial(int iKey, int iX, int iY)
 
 void vIdle()
 {
-    GLfloat fAspect, fHalfWorldSize = (sqrt(2)/2);
+    GLfloat aspectValue, midPointView = (sqrt(2)/2);
     
-    glViewport( 0, 0, iWidth, iHeight );
+    glViewport( 0, 0, screenWidth, screenHeight );
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     
-    if(iWidth <= iHeight)
+    if(screenWidth <= screenHeight)
     {
-        fAspect = (GLfloat)iHeight / (GLfloat)iWidth;
-        glOrtho(-fHalfWorldSize*zoomFactor, fHalfWorldSize*zoomFactor, -fHalfWorldSize*fAspect*zoomFactor,
-                fHalfWorldSize*fAspect*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        aspectValue = (GLfloat)screenHeight / (GLfloat)screenWidth;
+        glOrtho(-midPointView*zoomFactor, midPointView*zoomFactor, -midPointView*aspectValue*zoomFactor,
+                midPointView*aspectValue*zoomFactor, -10*midPointView, 10*midPointView);
     }
     else
     {
-        fAspect = (GLfloat)iWidth / (GLfloat)iHeight;
-        glOrtho(-fHalfWorldSize*fAspect*zoomFactor, fHalfWorldSize*fAspect*zoomFactor, -fHalfWorldSize*zoomFactor,
-                fHalfWorldSize*zoomFactor, -10*fHalfWorldSize, 10*fHalfWorldSize);
+        aspectValue = (GLfloat)screenWidth / (GLfloat)screenHeight;
+        glOrtho(-midPointView*aspectValue*zoomFactor, midPointView*aspectValue*zoomFactor, -midPointView*zoomFactor,
+                midPointView*zoomFactor, -10*midPointView, 10*midPointView);
     }
     glMatrixMode( GL_MODELVIEW );
     glutPostRedisplay();
@@ -385,13 +355,12 @@ void vIdle()
 
 void vDrawScene()
 {
-
-    static GLfloat fTime = 0.0;
+    static GLfloat timeF = 0.0;
 
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
     glPushMatrix();
-    vSetTime(fTime);
+    vSetTime(timeF);
     glTranslatef(0.0, 0.0, -1.0);
     glRotatef( -fPitch, 1.0, 0.0, 0.0);
     glRotatef(     0.0, 0.0, 1.0, 0.0);
@@ -406,7 +375,7 @@ void vDrawScene()
     glPushMatrix();
     glTranslatef(-0.5, -0.5, -0.5);
     glBegin(GL_TRIANGLES);
-    vMarchingCubes();
+    marchingCubesAux();
     glEnd();
     glPopMatrix();
 
@@ -416,8 +385,6 @@ void vDrawScene()
     glutSwapBuffers();
 }
 
-//fGetOffset finds the approximate point of intersection of the surface
-// between two points with the values fValue1 and fValue2
 GLfloat fGetOffset(GLfloat fValue1, GLfloat fValue2, GLfloat fValueDesired)
 {
     GLdouble fDelta = fValue2 - fValue1;
@@ -429,45 +396,40 @@ GLfloat fGetOffset(GLfloat fValue1, GLfloat fValue2, GLfloat fValueDesired)
     return (fValueDesired - fValue1)/fDelta;
 }
 
-
-//vGetColor generates a color from a given position and normal of a point
 GLvoid vGetColor(GLvector &rfColor, GLvector &rfPosition, GLvector &rfNormal)
 {
-    GLfloat fX = rfNormal.fX;
-    GLfloat fY = rfNormal.fY;
-    GLfloat fZ = rfNormal.fZ;
-    rfColor.fX = (fX > 0.0 ? fX : 0.0) + (fY < 0.0 ? -0.5*fY : 0.0) + (fZ < 0.0 ? -0.5*fZ : 0.0);
-    rfColor.fY = (fY > 0.0 ? fY : 0.0) + (fZ < 0.0 ? -0.5*fZ : 0.0) + (fX < 0.0 ? -0.5*fX : 0.0);
-    rfColor.fZ = (fZ > 0.0 ? fZ : 0.0) + (fX < 0.0 ? -0.5*fX : 0.0) + (fY < 0.0 ? -0.5*fY : 0.0);
+    GLfloat xVec = rfNormal.xVec;
+    GLfloat yVec = rfNormal.yVec;
+    GLfloat zVec = rfNormal.zVec;
+    rfColor.xVec = (xVec > 0.0 ? xVec : 0.0) + (yVec < 0.0 ? -0.5*yVec : 0.0) + (zVec < 0.0 ? -0.5*zVec : 0.0);
+    rfColor.yVec = (yVec > 0.0 ? yVec : 0.0) + (zVec < 0.0 ? -0.5*zVec : 0.0) + (xVec < 0.0 ? -0.5*xVec : 0.0);
+    rfColor.zVec = (zVec > 0.0 ? zVec : 0.0) + (xVec < 0.0 ? -0.5*xVec : 0.0) + (yVec < 0.0 ? -0.5*yVec : 0.0);
 }
 
 GLvoid vNormalizeVector(GLvector &rfVectorResult, GLvector &rfVectorSource)
 {
     GLfloat fOldLength;
-    GLfloat fScale;
+    GLfloat scalingFactor;
 
-    fOldLength = sqrtf( (rfVectorSource.fX * rfVectorSource.fX) +
-                       (rfVectorSource.fY * rfVectorSource.fY) +
-                       (rfVectorSource.fZ * rfVectorSource.fZ) );
+    fOldLength = sqrtf( (rfVectorSource.xVec * rfVectorSource.xVec) +
+                       (rfVectorSource.yVec * rfVectorSource.yVec) +
+                       (rfVectorSource.zVec * rfVectorSource.zVec) );
 
     if(fOldLength == 0.0)
     {
-        rfVectorResult.fX = rfVectorSource.fX;
-        rfVectorResult.fY = rfVectorSource.fY;
-        rfVectorResult.fZ = rfVectorSource.fZ;
+        rfVectorResult.xVec = rfVectorSource.xVec;
+        rfVectorResult.yVec = rfVectorSource.yVec;
+        rfVectorResult.zVec = rfVectorSource.zVec;
     }
     else
     {
-        fScale = 1.0/fOldLength;
-        rfVectorResult.fX = rfVectorSource.fX*fScale;
-        rfVectorResult.fY = rfVectorSource.fY*fScale;
-        rfVectorResult.fZ = rfVectorSource.fZ*fScale;
+        scalingFactor = 1.0/fOldLength;
+        rfVectorResult.xVec = rfVectorSource.xVec*scalingFactor;
+        rfVectorResult.yVec = rfVectorSource.yVec*scalingFactor;
+        rfVectorResult.zVec = rfVectorSource.zVec*scalingFactor;
     }
 }
 
-
-//Generate a sample data set.  fSample1(), fSample2() and fSample3() define three scalar fields whose
-// values vary by the X,Y and Z coordinates and by the fTime value set by vSetTime()
 GLvoid vSetTime(GLfloat fNewTime)
 {
     GLfloat fOffset;
@@ -475,137 +437,113 @@ GLvoid vSetTime(GLfloat fNewTime)
 
     for(iSourceNum = 0; iSourceNum < 3; iSourceNum++)
     {
-        sSourcePoint[iSourceNum].fX = 0.5;
-        sSourcePoint[iSourceNum].fY = 0.5;
-        sSourcePoint[iSourceNum].fZ = 0.5;
+        sSourcePoint[iSourceNum].xVec = 0.5;
+        sSourcePoint[iSourceNum].yVec = 0.5;
+        sSourcePoint[iSourceNum].zVec = 0.5;
     }
 
-    fTime = fNewTime;
-    fOffset = 1.0 + sinf(fTime);
-    sSourcePoint[0].fX *= fOffset;
-    sSourcePoint[1].fY *= fOffset;
-    sSourcePoint[2].fZ *= fOffset;
+    timeF = fNewTime;
+    fOffset = 1.0 + sinf(timeF);
+    sSourcePoint[0].xVec *= fOffset;
+    sSourcePoint[1].yVec *= fOffset;
+    sSourcePoint[2].zVec *= fOffset;
 }
 
-//fSample1 finds the distance of (fX, fY, fZ) from three moving points
-GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
+GLfloat fSampleSphere(GLfloat xVec, GLfloat yVec, GLfloat zVec)
 {
     GLdouble fResult = 0.0;
     GLdouble fDx, fDy, fDz;
+    fDx = xVec - sSourcePoint[2].xVec;
+    fDy = yVec - sSourcePoint[2].yVec;
+    fDz = zVec - sSourcePoint[2].zVec;
+    fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
 
-     fDx = fX - sSourcePoint[2].fX;
-     fDy = fY - sSourcePoint[2].fY;
-     fDz = fZ - sSourcePoint[2].fZ;
-     fResult += 1.5/(fDx*fDx + fDy*fDy + fDz*fDz);
-
-     return fResult;
+    return fResult;
 }
 
-//fSample1 finds the distance of (fX, fY, fZ) from three moving points
-GLfloat fSampleIntersection(GLfloat fX, GLfloat fY, GLfloat fZ)
+GLfloat fSampleIntersection(GLfloat xVec, GLfloat yVec, GLfloat zVec)
 {
     GLdouble fResult = 0.0;
     GLdouble fDx, fDy, fDz;
-    fDx = fX - sSourcePoint[0].fX;
-    fDy = fY - sSourcePoint[0].fY;
+    fDx = xVec - sSourcePoint[0].xVec;
+    fDy = yVec - sSourcePoint[0].yVec;
     fResult += 0.5/(fDx*fDx + fDy*fDy);
     
-    fDy = fY - sSourcePoint[2].fY;
-    fDz = fZ - sSourcePoint[2].fZ;
+    fDy = yVec - sSourcePoint[2].yVec;
+    fDz = zVec - sSourcePoint[2].zVec;
     fResult += 1.0/(fDy*fDy + fDz*fDz);
     
     return fResult;
 }
 
-
-//vGetNormal() finds the gradient of the scalar field at a point
-//This gradient can be used as a very accurate vertx normal for lighting calculations
-GLvoid vGetNormal(GLvector &rfNormal, GLfloat fX, GLfloat fY, GLfloat fZ)
+GLvoid vGetNormal(GLvector &rfNormal, GLfloat xVec, GLfloat yVec, GLfloat zVec)
 {
-    rfNormal.fX = fSample(fX-0.01, fY, fZ) - fSample(fX+0.01, fY, fZ);
-    rfNormal.fY = fSample(fX, fY-0.01, fZ) - fSample(fX, fY+0.01, fZ);
-    rfNormal.fZ = fSample(fX, fY, fZ-0.01) - fSample(fX, fY, fZ+0.01);
+    rfNormal.xVec = fSample(xVec-0.01, yVec, zVec) - fSample(xVec+0.01, yVec, zVec);
+    rfNormal.yVec = fSample(xVec, yVec-0.01, zVec) - fSample(xVec, yVec+0.01, zVec);
+    rfNormal.zVec = fSample(xVec, yVec, zVec-0.01) - fSample(xVec, yVec, zVec+0.01);
     vNormalizeVector(rfNormal, rfNormal);
 }
 
-
-//vMarchCube1 performs the Marching Cubes algorithm on a single cube
-GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
+GLvoid marchingCubes(GLfloat xVec, GLfloat yVec, GLfloat zVec, GLfloat scalingFactor)
 {
-    extern GLint aiCubeEdgeFlags[256];
+    extern GLint cubeEdgeConfigurations[256];
     extern GLint a2iTriangleConnectionTable[256][16];
 
-    GLint iCorner, iVertex, iVertexTest, iEdge, iTriangle, iFlagIndex, iEdgeFlags;
+    GLint iCorner, currentVertex, iVertexTest, currentEdge, currentTriangle, cubeConfig, currentEdgeFlags;
     GLfloat fOffset;
     GLvector sColor;
     GLfloat afCubeValue[8];
     GLvector asEdgeVertex[12];
     GLvector asEdgeNorm[12];
 
-    //Make a local copy of the values at the cube's corners
-    for(iVertex = 0; iVertex < 8; iVertex++)
-    {
-        afCubeValue[iVertex] = fSample(fX + a2fVertexOffset[iVertex][0]*fScale,
-                                       fY + a2fVertexOffset[iVertex][1]*fScale,
-                                       fZ + a2fVertexOffset[iVertex][2]*fScale);
+    for(currentVertex = 0; currentVertex < 8; currentVertex++){
+        afCubeValue[currentVertex] = fSample(xVec + verticesOffset[currentVertex][0]*scalingFactor, yVec + verticesOffset[currentVertex][1]*scalingFactor, zVec + verticesOffset[currentVertex][2]*scalingFactor);
     }
 
-    //Find which vertices are inside of the surface and which are outside
-    iFlagIndex = 0;
+    cubeConfig = 0;
     for(iVertexTest = 0; iVertexTest < 8; iVertexTest++)
     {
-        if(afCubeValue[iVertexTest] <= fTargetValue)
-            iFlagIndex |= 1<<iVertexTest;
+        if(afCubeValue[iVertexTest] <= isoValue)
+            cubeConfig |= 1<<iVertexTest;
     }
 
-    //Find which edges are intersected by the surface
-    iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
+    currentEdgeFlags = cubeEdgeConfigurations[cubeConfig];
 
-    //If the cube is entirely inside or outside of the surface, then there will be no intersections
-    if(iEdgeFlags == 0)
+    if(currentEdgeFlags == 0)
     {
         return;
     }
 
-    //Find the point of intersection of the surface with each edge
-    //Then find the normal to the surface at those points
-    for(iEdge = 0; iEdge < 12; iEdge++)
+    for(currentEdge = 0; currentEdge < 12; currentEdge++)
     {
-        //if there is an intersection on this edge
-        if(iEdgeFlags & (1<<iEdge)) //iEdge * 2, (iEdgeFlags == (iEdge*2))
+        if(currentEdgeFlags & (1<<currentEdge)) //currentEdge * 2, (currentEdgeFlags == (currentEdge*2))
         {
-            fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
-                                 afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
+            fOffset = fGetOffset(afCubeValue[ edgeConnectionTable[currentEdge][0] ], afCubeValue[ edgeConnectionTable[currentEdge][1] ], isoValue);
+            asEdgeVertex[currentEdge].xVec = xVec + (verticesOffset[ edgeConnectionTable[currentEdge][0]][0]  +  fOffset * edgeDirectionTable[currentEdge][0]) * scalingFactor;
+            asEdgeVertex[currentEdge].yVec = yVec + (verticesOffset[ edgeConnectionTable[currentEdge][0]][1]  +  fOffset * edgeDirectionTable[currentEdge][1]) * scalingFactor;
+            asEdgeVertex[currentEdge].zVec = zVec + (verticesOffset[ edgeConnectionTable[currentEdge][0]][2]  +  fOffset * edgeDirectionTable[currentEdge][2]) * scalingFactor;
 
-            asEdgeVertex[iEdge].fX = fX + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]) * fScale;
-            asEdgeVertex[iEdge].fY = fY + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]) * fScale;
-            asEdgeVertex[iEdge].fZ = fZ + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]) * fScale;
-
-            vGetNormal(asEdgeNorm[iEdge], asEdgeVertex[iEdge].fX, asEdgeVertex[iEdge].fY, asEdgeVertex[iEdge].fZ);
+            vGetNormal(asEdgeNorm[currentEdge], asEdgeVertex[currentEdge].xVec, asEdgeVertex[currentEdge].yVec, asEdgeVertex[currentEdge].zVec);
         }
     }
 
-
-    //Draw the triangles that were found.  There can be up to five per cube
-    for(iTriangle = 0; iTriangle < 5; iTriangle++)
+    for(currentTriangle = 0; currentTriangle < 5; currentTriangle++)
     {
-        if(a2iTriangleConnectionTable[iFlagIndex][3*iTriangle] < 0)
+        if(a2iTriangleConnectionTable[cubeConfig][3*currentTriangle] < 0)
             break;
 
         for(iCorner = 0; iCorner < 3; iCorner++)
         {
-            iVertex = a2iTriangleConnectionTable[iFlagIndex][3*iTriangle+iCorner];
-
-            vGetColor(sColor, asEdgeVertex[iVertex], asEdgeNorm[iVertex]);
-            glColor3f(sColor.fX, sColor.fY, sColor.fZ);
-            glNormal3f(asEdgeNorm[iVertex].fX,   asEdgeNorm[iVertex].fY,   asEdgeNorm[iVertex].fZ);
-            glVertex3f(asEdgeVertex[iVertex].fX, asEdgeVertex[iVertex].fY, asEdgeVertex[iVertex].fZ);
+            currentVertex = a2iTriangleConnectionTable[cubeConfig][3*currentTriangle+iCorner];
+            vGetColor(sColor, asEdgeVertex[currentVertex], asEdgeNorm[currentVertex]);
+            glColor3f(sColor.xVec, sColor.yVec, sColor.zVec);
+            glNormal3f(asEdgeNorm[currentVertex].xVec,   asEdgeNorm[currentVertex].yVec,   asEdgeNorm[currentVertex].zVec);
+            glVertex3f(asEdgeVertex[currentVertex].xVec, asEdgeVertex[currentVertex].yVec, asEdgeVertex[currentVertex].zVec);
         }
     }
 }
 
-//vMarchingCubes iterates over the entire dataset, calling vMarchCube on each cube
-GLvoid vMarchingCubes()
+GLvoid marchingCubesAux()
 {
     GLint iX, iY, iZ;
     for(iX = 0; iX < iDataSetSize; iX++)
@@ -617,15 +555,10 @@ GLvoid vMarchingCubes()
 }
 
 
-// For any edge, if one vertex is inside of the surface and the other is outside of the surface
-//  then the edge intersects the surface
-
-// For each of the 8 vertices of the cube can be two possible states : either inside or outside of the surface
-// For any cube the are 2^8=256 possible sets of vertex states
-// This table lists the edges intersected by the surface for all 256 possible vertex states
-// There are 12 edges.  For each entry in the table, if edge #n is intersected, then bit #n is set to 1
-
-GLint aiCubeEdgeFlags[256]=
+// Table for the cube configurations in the edges
+// For each of the 8 vertices there are two possible states, inside or ouside of surface, in total 256
+// there are 12 edges
+GLint cubeEdgeConfigurations[256]=
 {
     0x000, 0x109, 0x203, 0x30a, 0x406, 0x50f, 0x605, 0x70c, 0x80c, 0x905, 0xa0f, 0xb06, 0xc0a, 0xd03, 0xe09, 0xf00,
     0x190, 0x099, 0x393, 0x29a, 0x596, 0x49f, 0x795, 0x69c, 0x99c, 0x895, 0xb9f, 0xa96, 0xd9a, 0xc93, 0xf99, 0xe90,
@@ -645,14 +578,8 @@ GLint aiCubeEdgeFlags[256]=
     0xf00, 0xe09, 0xd03, 0xc0a, 0xb06, 0xa0f, 0x905, 0x80c, 0x70c, 0x605, 0x50f, 0x406, 0x30a, 0x203, 0x109, 0x000
 };
 
-//  For each of the possible vertex states listed in aiCubeEdgeFlags there is a specific triangulation
-//  of the edge intersection points.  a2iTriangleConnectionTable lists all of them in the form of
-//  0-5 edge triples with the list terminated by the invalid value -1.
-//  For example: a2iTriangleConnectionTable[3] list the 2 triangles formed when corner[0]
-//  and corner[1] are inside of the surface, but the rest of the cube is not.
-//
-//  I found this table in an example program someone wrote long ago.  It was probably generated by hand
-
+//  For each of the possible vertex states listed in cubeEdgeConfigurations there is a specific triangulation
+//  We found this table 
 GLint a2iTriangleConnectionTable[256][16] =
 {
     {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
