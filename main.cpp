@@ -59,7 +59,7 @@ static const GLfloat afSpecularWhite[] = {1.00, 1.00, 1.00, 1.00};
 GLenum    ePolygonMode = GL_FILL;
 GLint     iDataSetSize = 16;
 GLfloat   fStepSize = 1.0/iDataSetSize;
-GLfloat   fTargetValue = 48.0;
+GLfloat   fTargetValue = 1.0;
 GLfloat   fTime = 0.0;
 GLvector  sSourcePoint[3];
 GLboolean bSpin = true;
@@ -86,9 +86,11 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ);
 GLfloat (*fSample)(GLfloat fX, GLfloat fY, GLfloat fZ) = fSample1;
 
 GLvoid vMarchingCubes();
-GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale);
+//GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale);
+GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ);
 
-GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarchCube1;
+//GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale) = vMarchCube1;
+GLvoid (*vMarchCube)(GLfloat fX, GLfloat fY, GLfloat fZ) = vMarchCube1;
 
 int main(int argc, char **argv)
 {
@@ -239,7 +241,7 @@ void camera_control(int value)
 
 void vResize( GLsizei iWidth, GLsizei iHeight )
 {
-    GLfloat fAspect, fHalfWorldSize = (1.4142135623730950488016887242097/2);
+    GLfloat fAspect, fHalfWorldSize = (1.4142/2);
 
     glViewport( 0, 0, iWidth, iHeight );
     glMatrixMode (GL_PROJECTION);
@@ -445,6 +447,7 @@ GLvoid vNormalizeVector(GLvector &rfVectorResult, GLvector &rfVectorSource)
 }
 
 
+
 //Generate a sample data set.  fSample1(), fSample2() and fSample3() define three scalar fields whose
 // values vary by the X,Y and Z coordinates and by the fTime value set by vSetTime()
 GLvoid vSetTime(GLfloat fNewTime)
@@ -494,20 +497,74 @@ GLfloat fSample1(GLfloat fX, GLfloat fY, GLfloat fZ)
 //This gradient can be used as a very accurate vertx normal for lighting calculations
 GLvoid vGetNormal(GLvector &rfNormal, GLfloat fX, GLfloat fY, GLfloat fZ)
 {
-    rfNormal.fX = fSample(fX-0.01, fY, fZ) - fSample(fX+0.01, fY, fZ);
-    rfNormal.fY = fSample(fX, fY-0.01, fZ) - fSample(fX, fY+0.01, fZ);
-    rfNormal.fZ = fSample(fX, fY, fZ-0.01) - fSample(fX, fY, fZ+0.01);
+    extern GLfloat myMatrix[16][16];
+
+    rfNormal.fX = myMatrix[static_cast<int>(fX-1)][static_cast<int>(fY)] - myMatrix[static_cast<int>(fX+1)][static_cast<int>(fY)];
+    rfNormal.fY = myMatrix[static_cast<int>(fX)][static_cast<int>(fY-1)] - myMatrix[static_cast<int>(fX)][static_cast<int>(fY+1)];
+    rfNormal.fZ = 1;
+    // rfNormal.fX = myMatrix[fX-1][fY] - myMatrix[fX+1][fY];
+    // rfNormal.fX = fSample(fX-0.01, fY, fZ) - fSample(fX+0.01, fY, fZ);
+    // rfNormal.fY = fSample(fX, fY-0.01, fZ) - fSample(fX, fY+0.01, fZ);
+    // rfNormal.fZ = fSample(fX, fY, fZ-0.01) - fSample(fX, fY, fZ+0.01);
     vNormalizeVector(rfNormal, rfNormal);
 }
 
 
+GLfloat myMatrix[16][16] = {
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+                            {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+                            };
+// GLfloat myMatrix[32][32] = {
+//         {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
+//         {1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+//         {1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
+    
+//     };
+
 //vMarchCube1 performs the Marching Cubes algorithm on a single cube
-GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
+GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ)
 {
+    
     extern GLint aiCubeEdgeFlags[256];
     extern GLint a2iTriangleConnectionTable[256][16];
 
-    GLint iCorner, iVertex, iVertexTest, iEdge, iTriangle, iFlagIndex, iEdgeFlags;
+    GLint iCorner, iVertex, iEdge, iTriangle, iFlagIndex, iEdgeFlags;
     GLfloat fOffset;
     GLvector sColor;
     GLfloat afCubeValue[8];
@@ -517,27 +574,43 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
     //Make a local copy of the values at the cube's corners
     for(iVertex = 0; iVertex < 8; iVertex++)
     {
-        afCubeValue[iVertex] = fSample(fX + a2fVertexOffset[iVertex][0]*fScale,
-                                       fY + a2fVertexOffset[iVertex][1]*fScale,
-                                       fZ + a2fVertexOffset[iVertex][2]*fScale);
+        //fSample uses circle/pipes/water formula to get values for each vertex of the cube
+//        afCubeValue[iVertex] = fSample(fX + a2fVertexOffset[iVertex][0]*fScale,
+//                                       fY + a2fVertexOffset[iVertex][1]*fScale,
+//                                       fZ + a2fVertexOffset[iVertex][2]*fScale);
+        int x = static_cast<int>(fX);
+        int y = static_cast<int>(fY);
+        int z = static_cast<int>(fZ);
+//        std::cout << z << std::endl;
+
+        
+        afCubeValue[iVertex] = myMatrix[x + static_cast<int>(a2fVertexOffset[iVertex][0])]
+                                       [y + static_cast<int>(a2fVertexOffset[iVertex][1])];
+        
+        
+        
+        
     }
 
     //Find which vertices are inside of the surface and which are outside
     iFlagIndex = 0;
-    for(iVertexTest = 0; iVertexTest < 8; iVertexTest++)
+    for(int i = 0; i < 8; i++)
     {
-        if(afCubeValue[iVertexTest] <= fTargetValue)
-            iFlagIndex |= 1<<iVertexTest;
+        if(afCubeValue[i] < fTargetValue)
+            iFlagIndex |= 1<<i;
+//        std::cout << afCubeValue[i] << std::endl;
     }
 
     //Find which edges are intersected by the surface
+    
     iEdgeFlags = aiCubeEdgeFlags[iFlagIndex];
+    
 
     //If the cube is entirely inside or outside of the surface, then there will be no intersections
-    if(iEdgeFlags == 0)
-    {
-        return;
-    }
+//    if(iEdgeFlags == 0)
+//    {
+//        return;
+//    }
 
     //Find the point of intersection of the surface with each edge
     //Then find the normal to the surface at those points
@@ -546,14 +619,18 @@ GLvoid vMarchCube1(GLfloat fX, GLfloat fY, GLfloat fZ, GLfloat fScale)
         //if there is an intersection on this edge
         if(iEdgeFlags & (1<<iEdge)) //iEdge * 2, (iEdgeFlags == (iEdge*2))
         {
-            fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
-                                 afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
+//            fOffset = fGetOffset(afCubeValue[ a2iEdgeConnection[iEdge][0] ],
+//                                 afCubeValue[ a2iEdgeConnection[iEdge][1] ], fTargetValue);
 
-            asEdgeVertex[iEdge].fX = fX + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]) * fScale;
-            asEdgeVertex[iEdge].fY = fY + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]) * fScale;
-            asEdgeVertex[iEdge].fZ = fZ + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]) * fScale;
+            asEdgeVertex[iEdge].fX = fX + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  +  fOffset * a2fEdgeDirection[iEdge][0]);
+            asEdgeVertex[iEdge].fY = fY + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]  +  fOffset * a2fEdgeDirection[iEdge][1]);
+            asEdgeVertex[iEdge].fZ = fZ + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]  +  fOffset * a2fEdgeDirection[iEdge][2]);
+//            asEdgeVertex[iEdge].fX = fX + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][0]  * a2fEdgeDirection[iEdge][0]);
+//            asEdgeVertex[iEdge].fY = fY + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][1]   * a2fEdgeDirection[iEdge][1]);
+//            asEdgeVertex[iEdge].fZ = fZ + (a2fVertexOffset[ a2iEdgeConnection[iEdge][0] ][2]   * a2fEdgeDirection[iEdge][2]);
 
-            vGetNormal(asEdgeNorm[iEdge], asEdgeVertex[iEdge].fX, asEdgeVertex[iEdge].fY, asEdgeVertex[iEdge].fZ);
+
+             vGetNormal(asEdgeNorm[iEdge], asEdgeVertex[iEdge].fX, asEdgeVertex[iEdge].fY, asEdgeVertex[iEdge].fZ);
         }
     }
 
@@ -584,7 +661,7 @@ GLvoid vMarchingCubes()
         for(iY = 0; iY < iDataSetSize; iY++)
             for(iZ = 0; iZ < iDataSetSize; iZ++)
             {
-                vMarchCube(iX*fStepSize, iY*fStepSize, iZ*fStepSize, fStepSize);
+                vMarchCube(iX, iY, iZ);
             }
 }
 
