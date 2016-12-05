@@ -549,7 +549,7 @@ GLvoid marchingCubesAux()
                 vMarchCube(iX*fStepSize, iY*fStepSize, iZ*fStepSize, fStepSize);
             }
     fprintf(obj, "\tf ");
-    for(int i = 1; i < 1100; i++){
+    for(int i = 1; i < 700; i++){
         fprintf(obj, "%d ", i);
         
     }
